@@ -9,7 +9,8 @@ add_executable(tests
   message.cpp
   note.cpp
   other.cpp
-  player_base.cpp)
+  player_base.cpp
+  player_sync.cpp)
 
 target_compile_options(tests PRIVATE -Wall -pedantic -Wextra)
 target_compile_features(tests PRIVATE cxx_std_17)
