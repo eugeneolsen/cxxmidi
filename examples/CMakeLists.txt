@@ -1,6 +1,10 @@
+option(CXXMIDI_BUILD_QT_EXAMPLES "Build Qt-based examples" OFF)
+
 add_subdirectory(callbacks)
-add_subdirectory(qtmidieditor)
-add_subdirectory(qtmidiplayer)
+if(CXXMIDI_BUILD_QT_EXAMPLES)
+  add_subdirectory(qtmidieditor)
+  add_subdirectory(qtmidiplayer)
+endif()
 add_subdirectory(player_async)
 add_subdirectory(player_sync)
 add_subdirectory(sequencing)
