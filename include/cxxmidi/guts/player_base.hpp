@@ -76,6 +76,8 @@ class PlayerBase {
   inline void SetCallbackFinished(const std::function<void()>& callback);
   inline void SetCallbackEvent(const std::function<bool(Event& event)>& callback);
 
+  inline size_t CurrentTrack() const { return current_track_; }
+
  protected:
   inline bool TrackFinished(size_t track_num) const;
   inline unsigned int TrackPending() const;
@@ -86,8 +88,9 @@ class PlayerBase {
   float speed_;
   const File* file_;
   std::chrono::microseconds played_us_;
+  size_t current_track_;
 
-  inline void ExecEvent(const Event& event);
+  inline void ExecEvent(const Event& event, size_t track_num);
 
   class PlayerStateElem {
    public:
@@ -130,6 +133,7 @@ PlayerBase::PlayerBase()
       speed_(1.),
       file_(nullptr),
       played_us_(std::chrono::microseconds(0)),
+      current_track_(0),
       output_(0),
       heartbeat_helper_(0) {
   PlayerBase::SetupWindowsTimers();
@@ -141,6 +145,7 @@ PlayerBase::PlayerBase(output::Abstract* output)
       speed_(1.),
       file_(nullptr),
       played_us_(std::chrono::microseconds(0)),
+      current_track_(0),
       output_(output),
       heartbeat_helper_(0) {
   PlayerBase::SetupWindowsTimers();
@@ -191,7 +196,7 @@ void PlayerBase::GoTo(const std::chrono::microseconds& pos) {
     Event event = (*file_)[track_mum][event_num];
     if (!event.IsVoiceCategory(Message::kNoteOn) &&
         !event.IsVoiceCategory(Message::kNoteOff))
-      ExecEvent(event);
+      ExecEvent(event, track_mum);
 
     UpdatePlayerState(track_mum, dt);
 
@@ -216,7 +221,7 @@ void PlayerBase::GoToTick(uint32_t tick)
     if ((message[0] == Message::kMeta && message[1] == Message::kTempo) ||
         (message[0] == Message::kMeta && message[1] == Message::kKeySignature))
         {
-            ExecEvent(event);
+            ExecEvent(event, track_num);
         }
 
     UpdatePlayerState(track_num, dt);
@@ -357,8 +362,10 @@ void PlayerBase::UpdatePlayerState(unsigned int track_num, unsigned int dt) {
     }
 }
 
-void PlayerBase::ExecEvent(const Event& event) {
+void PlayerBase::ExecEvent(const Event& event, size_t track_num) {
   Event ev(event);
+
+  current_track_ = track_num;
 
   bool send = true;   // Send events to output by default
 

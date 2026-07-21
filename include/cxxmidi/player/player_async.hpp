@@ -222,7 +222,7 @@ void* PlayerAsync::PlayerLoop(void* caller) {
       // cppcheck-suppress unreadVariable RAII
       std::scoped_lock lock(that->mutex_);
       that->played_us_ += std::chrono::microseconds(us);
-      that->ExecEvent((*that->file_)[track_num][event_num]);
+      that->ExecEvent((*that->file_)[track_num][event_num], track_num);
       that->UpdatePlayerState(track_num, dt);
     }
   }

@@ -90,7 +90,7 @@ void PlayerSync::PlayerLoop() {
     std::this_thread::sleep_for(std::chrono::microseconds(wait));
     heartbeat_helper_ += us.count();
     played_us_ += std::chrono::microseconds(us);
-    ExecEvent((*file_)[track_num][event_num]);
+    ExecEvent((*file_)[track_num][event_num], track_num);
     UpdatePlayerState(track_num, dt);
   }
 

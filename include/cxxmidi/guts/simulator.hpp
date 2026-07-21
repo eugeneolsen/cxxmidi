@@ -53,7 +53,7 @@ std::chrono::microseconds Simulator::Duration(const File &file) {
     unsigned int eventNum = player_state_[trackNum].track_pointer_;
     uint32_t dt = player_state_[trackNum].track_dt_;
     r += converters::Dt2us(dt, tempo_, file_->TimeDivision());
-    ExecEvent((*file_)[trackNum][eventNum]);
+    ExecEvent((*file_)[trackNum][eventNum], trackNum);
     UpdatePlayerState(trackNum, dt);
   }
 
