@@ -29,6 +29,7 @@ SOFTWARE.
 #include <assert.h>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>  // NOLINT() CPP11_INCLUDES
 #include <cstdint>
 #include <functional>
@@ -84,7 +85,7 @@ class PlayerBase {
 
   uint32_t tempo_;  // [us per quarternote]
   bool is_playing_;
-  bool _stopped;
+  std::atomic<bool> _stopped;
   float speed_;
   const File* file_;
   std::chrono::microseconds played_us_;
