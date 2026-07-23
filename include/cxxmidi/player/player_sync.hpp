@@ -74,7 +74,7 @@ void PlayerSync::PlayerLoop() {
     uint32_t dt = player_state_[track_num].track_dt_;
     auto us = converters::Dt2us(dt, tempo_, file_->TimeDivision());
 
-    while ((heartbeat_helper_ + us.count()) >= 10000) {
+    while (!_stopped && (heartbeat_helper_ + us.count()) >= 10000) {
       unsigned int partial = 10000 - heartbeat_helper_;
       heartbeat_helper_ = 0;
       us -= std::chrono::microseconds(partial);
@@ -85,6 +85,8 @@ void PlayerSync::PlayerLoop() {
 
       if (clbk_fun_heartbeat_) clbk_fun_heartbeat_();
     }
+
+    if (_stopped) break;
 
     unsigned int wait = us.count() / speed_;
     std::this_thread::sleep_for(std::chrono::microseconds(wait));
