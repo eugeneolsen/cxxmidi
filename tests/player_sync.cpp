@@ -22,6 +22,7 @@ SOFTWARE.
 
 #include <gtest/gtest.h>
 
+#include <chrono>  // NOLINT() CPP11_INCLUDES
 #include <vector>
 
 #include <cxxmidi/file.hpp>
@@ -65,4 +66,42 @@ TEST(PlayerSync, CurrentTrackDuringCallback) {
 
   const std::vector<size_t> expected = {0, 0, 0, 1, 1, 1};
   EXPECT_EQ(observed_tracks, expected);
+}
+
+TEST(PlayerSync, StopDuringLongGapReturnsPromptly) {
+  cxxmidi::File file;
+
+  // Default tempo (500000 us/quarternote) and time division (500
+  // ticks/quarternote) give 1000us/tick, so dt=150 is a 150ms gap before
+  // the first event fires -- 15 chunks of PlayerLoop()'s ~10ms heartbeat.
+  cxxmidi::Track &track0 = file.AddTrack();
+  track0.push_back(cxxmidi::Event(150, cxxmidi::Message::kNoteOn,
+                                  cxxmidi::Note::MiddleC(), 100));
+  track0.push_back(
+      cxxmidi::Event(0, cxxmidi::Message::kMeta, cxxmidi::Message::kEndOfTrack));
+
+  cxxmidi::output::Null output;
+  cxxmidi::player::PlayerSync player(&output);
+  player.SetFile(&file);
+
+  int heartbeats = 0;
+  std::vector<int> observed_events;
+  player.SetCallbackHeartbeat([&]() {
+    heartbeats++;
+    if (heartbeats == 2) player.Stop();
+  });
+  player.SetCallbackEvent([&](cxxmidi::Event & /*event*/) {
+    observed_events.push_back(1);
+    return true;
+  });
+
+  const auto start = std::chrono::steady_clock::now();
+  player.Play();
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+
+  // Stop() lands during the 3rd ~10ms chunk of the 150ms gap. Without the
+  // fix, PlayerLoop() sleeps out the rest of the gap regardless (~150ms);
+  // with the fix it unwinds within about one more chunk.
+  EXPECT_LT(elapsed, std::chrono::milliseconds(75));
+  EXPECT_TRUE(observed_events.empty());
 }
